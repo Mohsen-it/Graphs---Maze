@@ -12,3 +12,4 @@ E:\Graphs & Maze\obj\Debug\net8.0-windows\refint\GraphTeachingApp.dll
 E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.pdb
 E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.genruntimeconfig.cache
 E:\Graphs & Maze\obj\Debug\net8.0-windows\ref\GraphTeachingApp.dll
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.sourcelink.json

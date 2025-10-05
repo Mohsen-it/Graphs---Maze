@@ -21,6 +21,7 @@ namespace GraphTeachingApp
         private List<Node> highlightedNodes; // العقد المضيئة مؤقتاً
         private List<Edge> highlightedEdges; // الحواف المضيئة مؤقتاً
         private Node selectedNode; // العقدة المحددة حالياً
+        private Node firstNodeForEdge; // العقدة الأولى المحددة لربط وصلة جديدة
         private bool isDrawing; // هل نحن في وضع الرسم
         private Point lastMousePosition; // آخر موقع للفأرة
         private float zoomFactor; // عامل التكبير/التصغير
@@ -59,6 +60,7 @@ namespace GraphTeachingApp
 
                 zoomFactor = 1.0f;
                 isDrawing = false;
+                firstNodeForEdge = null; // تهيئة العقدة الأولى لربط الوصلات
 
                 // رسالة ترحيب في مربع النتائج
                 AppendToResults("مرحباً بك في تطبيق تعليم الرسوم البيانية!");
@@ -491,13 +493,41 @@ namespace GraphTeachingApp
             {
                 if (clickedNode != null)
                 {
-                    selectedNode = clickedNode;
-                    lastMousePosition = e.Location;
-                    AppendToResults($"تم تحديد العقدة: {clickedNode.Name}");
+                    // إذا لم تكن هناك عقدة أولى محددة للربط
+                    if (firstNodeForEdge == null)
+                    {
+                        firstNodeForEdge = clickedNode;
+                        highlightedNodes.Add(clickedNode);
+                        AppendToResults($"تم تحديد العقدة الأولى للربط: {clickedNode.Name}");
+                        AppendToResults("انقر على عقدة ثانية لإنشاء وصلة، أو انقر مرة أخرى على نفس العقدة لإلغاء التحديد");
+                    }
+                    else
+                    {
+                        // إذا كانت هناك عقدة أولى محددة، أنشئ وصلة مع العقدة الثانية
+                        if (clickedNode != firstNodeForEdge)
+                        {
+                            CreateEdgeBetweenNodes(firstNodeForEdge, clickedNode);
+                        }
+
+                        // إزالة التحديد من العقدة الأولى
+                        highlightedNodes.Remove(firstNodeForEdge);
+                        firstNodeForEdge = null;
+                    }
+
+                    drawingPanel.Invalidate();
                 }
                 else
                 {
-                    // إضافة عقدة جديدة عند النقر المزدوج
+                    // إزالة تحديد العقدة الأولى إذا نقر المستخدم في مكان فارغ
+                    if (firstNodeForEdge != null)
+                    {
+                        highlightedNodes.Remove(firstNodeForEdge);
+                        firstNodeForEdge = null;
+                        drawingPanel.Invalidate();
+                        AppendToResults("تم إلغاء تحديد العقدة للربط");
+                    }
+
+                    // إضافة عقدة جديدة عند النقر المزدوج (Ctrl + Click)
                     if (Control.ModifierKeys == Keys.Control)
                     {
                         AddNodeAtPosition(e.Location);
@@ -538,6 +568,19 @@ namespace GraphTeachingApp
         private void DrawingPanel_MouseUp(object sender, MouseEventArgs e)
         {
             selectedNode = null;
+        }
+
+        /// <summary>
+        /// إعادة تعيين حالة ربط العقد
+        /// </summary>
+        private void ResetEdgeCreation()
+        {
+            if (firstNodeForEdge != null)
+            {
+                highlightedNodes.Remove(firstNodeForEdge);
+                firstNodeForEdge = null;
+                drawingPanel.Invalidate();
+            }
         }
 
         /// <summary>
@@ -611,6 +654,29 @@ namespace GraphTeachingApp
 
                 AppendToResults($"تم حذف العقدة: {nodeName}");
             }
+        }
+
+        /// <summary>
+        /// إنشاء وصلة بين عقدتين
+        /// </summary>
+        private void CreateEdgeBetweenNodes(Node node1, Node node2)
+        {
+            // التحقق من عدم وجود وصلة مسبقة بين نفس العقدتين
+            bool edgeExists = currentGraph.Edges.Any(e =>
+                (e.From.Name == node1.Name && e.To.Name == node2.Name) ||
+                (!currentGraph.IsDirected && e.From.Name == node2.Name && e.To.Name == node1.Name));
+
+            if (edgeExists)
+            {
+                AppendToResults($"الوصلة موجودة مسبقاً بين {node1.Name} و {node2.Name}");
+                return;
+            }
+
+            // إضافة الوصلة للرسم البياني
+            currentGraph.AddEdge(node1.Name, node2.Name);
+
+            drawingPanel.Invalidate();
+            AppendToResults($"تم إنشاء وصلة بين {node1.Name} و {node2.Name}");
         }
 
         #endregion
