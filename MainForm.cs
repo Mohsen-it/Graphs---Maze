@@ -42,10 +42,12 @@ namespace GraphTeachingApp
         {
             try
             {
-                // تحديد حجم النافذة كما هو مطلوب
+                // تحديد حجم النافذة المحسن مع حد أدنى للحفاظ على الوضوح
                 this.Size = new Size(1200, 800);
+                this.MinimumSize = new Size(900, 600); // حد أدنى لمنع تصغير زائد
                 this.Text = "تعليم الرسوم البيانية - Graphs Teaching App";
                 this.StartPosition = FormStartPosition.CenterScreen;
+                this.Resize += MainForm_Resize; // إضافة معالج تغيير الحجم
 
                 // إنشاء العناصر المرئية أولاً
                 InitializeCustomComponents();
@@ -76,16 +78,20 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// تهيئة العناصر المخصصة للواجهة
+        /// تهيئة العناصر المخصصة للواجهة مع تخطيط محسن ومتجاوب
         /// </summary>
         private void InitializeCustomComponents()
         {
-            // إنشاء لوحة الرسم الرئيسية
+            // تعيين خصائص النافذة للتكيف التلقائي
+            this.AutoScroll = false;
+
+            // إنشاء لوحة الرسم الرئيسية مع خصائص متجاوبة
             drawingPanel = new Panel();
             drawingPanel.Size = new Size(800, 600);
             drawingPanel.Location = new Point(20, 60);
             drawingPanel.BackColor = Color.White;
             drawingPanel.BorderStyle = BorderStyle.FixedSingle;
+            drawingPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             // إضافة أحداث الماوس للوحة الرسم
             drawingPanel.MouseDown += DrawingPanel_MouseDown;
@@ -97,35 +103,30 @@ namespace GraphTeachingApp
             // إضافة اللوحة إلى النافذة
             this.Controls.Add(drawingPanel);
 
-            // إنشاء شريط الأدوات العلوي
-            CreateToolbar();
+            // إنشاء شريط الأدوات العلوي مع خصائص متجاوبة
+            CreateResponsiveToolbar();
 
-            // إنشاء مربع النتائج السفلي
-            CreateResultsTextBox();
+            // إنشاء مربع النتائج السفلي مع خصائص متجاوبة
+            CreateResponsiveResultsTextBox();
 
-            // إنشاء مربعات الإدخال للعقد والمسارات
-            CreateInputControls();
+            // إنشاء مربعات الإدخال للعقد والمسارات مع خصائص متجاوبة
+            CreateResponsiveInputControls();
         }
 
         /// <summary>
-        /// إنشاء شريط الأدوات مع جميع الأزرار
+        /// إنشاء شريط الأدوات المتجاوب مع جميع الأزرار
         /// </summary>
-        private void CreateToolbar()
+        private void CreateResponsiveToolbar()
         {
             try
             {
-                // إنشاء لوحة شريط الأدوات
+                // إنشاء لوحة شريط الأدوات مع خصائص متجاوبة
                 toolbarPanel = new Panel();
                 toolbarPanel.Size = new Size(1150, 80);
                 toolbarPanel.Location = new Point(10, 10);
                 toolbarPanel.BackColor = Color.LightGray;
-
-                // إنشاء الأزرار في صف واحد مع عرض مناسب
-                int buttonWidth = 105;
-                int buttonHeight = 30;
-                int spacing = 5;
-                int currentX = 10;
-                int currentY = 5;
+                toolbarPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                toolbarPanel.AutoScroll = false;
 
                 // قائمة بجميع الأزرار مع معالجاتها
                 var buttons = new (string text, EventHandler handler)[]
@@ -149,22 +150,21 @@ namespace GraphTeachingApp
                 {
                     Button btn = new Button();
                     btn.Text = text;
-                    btn.Size = new Size(buttonWidth, buttonHeight);
-                    btn.Location = new Point(currentX, currentY);
+                    btn.Size = new Size(105, 30);
                     btn.BackColor = Color.White;
                     btn.FlatStyle = FlatStyle.Flat;
+                    btn.Anchor = AnchorStyles.Top | AnchorStyles.Left;
 
                     if (handler != null)
                         btn.Click += handler;
 
                     toolbarPanel.Controls.Add(btn);
-                    currentX += buttonWidth + spacing;
                 }
 
                 // إضافة شريط الأدوات إلى النافذة
                 this.Controls.Add(toolbarPanel);
 
-                AppendToResults($"تم إنشاء شريط الأدوات مع {buttons.Length} زر");
+                AppendToResults($"تم إنشاء شريط الأدوات المتجاوب مع {buttons.Length} زر");
             }
             catch (Exception ex)
             {
@@ -187,9 +187,9 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// إنشاء مربع النتائج السفلي
+        /// إنشاء مربع النتائج المتجاوب السفلي
         /// </summary>
-        private void CreateResultsTextBox()
+        private void CreateResponsiveResultsTextBox()
         {
             resultsTextBox = new RichTextBox();
             resultsTextBox.Size = new Size(1150, 100);
@@ -199,70 +199,89 @@ namespace GraphTeachingApp
             resultsTextBox.Font = new Font("Consolas", 10);
             resultsTextBox.ReadOnly = true;
             resultsTextBox.ScrollBars = RichTextBoxScrollBars.Vertical;
+            resultsTextBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
             this.Controls.Add(resultsTextBox);
         }
 
         /// <summary>
-        /// إنشاء مربعات الإدخال للعقد والمسارات
+        /// إنشاء مربعات الإدخال المتجاوبة للعقد والمسارات
         /// </summary>
-        private void CreateInputControls()
+        private void CreateResponsiveInputControls()
         {
+            // لوحة جانبية لمربعات الإدخال
+            Panel inputPanel = new Panel();
+            inputPanel.Size = new Size(220, 400);
+            inputPanel.Location = new Point(10, 10); // سيتم تعديل الموقع ديناميكياً
+            inputPanel.BackColor = Color.FromArgb(245, 245, 245);
+            inputPanel.BorderStyle = BorderStyle.FixedSingle;
+            inputPanel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            inputPanel.Name = "inputPanel";
+            this.Controls.Add(inputPanel);
+
             // تسمية العقدة المصدر
             Label lblSourceNode = new Label();
             lblSourceNode.Text = "العقدة المصدر:";
-            lblSourceNode.Location = new Point(850, 60);
-            lblSourceNode.Size = new Size(100, 20);
-            this.Controls.Add(lblSourceNode);
+            lblSourceNode.Location = new Point(10, 15);
+            lblSourceNode.Size = new Size(90, 20);
+            lblSourceNode.Name = "lblSourceNode";
+            inputPanel.Controls.Add(lblSourceNode);
 
             // قائمة العقد المصدر
             sourceNodeComboBox = new ComboBox();
-            sourceNodeComboBox.Location = new Point(850, 85);
-            sourceNodeComboBox.Size = new Size(100, 25);
+            sourceNodeComboBox.Location = new Point(10, 40);
+            sourceNodeComboBox.Size = new Size(90, 25);
             sourceNodeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            this.Controls.Add(sourceNodeComboBox);
+            sourceNodeComboBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            inputPanel.Controls.Add(sourceNodeComboBox);
 
             // تسمية العقدة الهدف
             Label lblTargetNode = new Label();
             lblTargetNode.Text = "العقدة الهدف:";
-            lblTargetNode.Location = new Point(970, 60);
-            lblTargetNode.Size = new Size(100, 20);
-            this.Controls.Add(lblTargetNode);
+            lblTargetNode.Location = new Point(115, 15);
+            lblTargetNode.Size = new Size(90, 20);
+            lblTargetNode.Name = "lblTargetNode";
+            inputPanel.Controls.Add(lblTargetNode);
 
             // قائمة العقد الهدف
             targetNodeComboBox = new ComboBox();
-            targetNodeComboBox.Location = new Point(970, 85);
-            targetNodeComboBox.Size = new Size(100, 25);
+            targetNodeComboBox.Location = new Point(115, 40);
+            targetNodeComboBox.Size = new Size(90, 25);
             targetNodeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            this.Controls.Add(targetNodeComboBox);
+            targetNodeComboBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            inputPanel.Controls.Add(targetNodeComboBox);
 
             // تسمية طول المسار
             Label lblPathLength = new Label();
             lblPathLength.Text = "طول المسار:";
-            lblPathLength.Location = new Point(850, 120);
-            lblPathLength.Size = new Size(100, 20);
-            this.Controls.Add(lblPathLength);
+            lblPathLength.Location = new Point(10, 80);
+            lblPathLength.Size = new Size(90, 20);
+            lblPathLength.Name = "lblPathLength";
+            inputPanel.Controls.Add(lblPathLength);
 
             // مربع إدخال طول المسار
             pathLengthTextBox = new TextBox();
-            pathLengthTextBox.Location = new Point(850, 145);
-            pathLengthTextBox.Size = new Size(100, 25);
+            pathLengthTextBox.Location = new Point(10, 105);
+            pathLengthTextBox.Size = new Size(90, 25);
             pathLengthTextBox.Text = "3";
-            this.Controls.Add(pathLengthTextBox);
+            pathLengthTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            inputPanel.Controls.Add(pathLengthTextBox);
 
             // تسمية اسم العقدة الجديدة
             Label lblNewNode = new Label();
             lblNewNode.Text = "اسم العقدة:";
-            lblNewNode.Location = new Point(970, 120);
-            lblNewNode.Size = new Size(100, 20);
-            this.Controls.Add(lblNewNode);
+            lblNewNode.Location = new Point(115, 80);
+            lblNewNode.Size = new Size(90, 20);
+            lblNewNode.Name = "lblNewNode";
+            inputPanel.Controls.Add(lblNewNode);
 
             // مربع إدخال اسم العقدة الجديدة
             newNodeTextBox = new TextBox();
-            newNodeTextBox.Location = new Point(970, 145);
-            newNodeTextBox.Size = new Size(100, 25);
+            newNodeTextBox.Location = new Point(115, 105);
+            newNodeTextBox.Size = new Size(90, 25);
             newNodeTextBox.Text = "A";
-            this.Controls.Add(newNodeTextBox);
+            newNodeTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            inputPanel.Controls.Add(newNodeTextBox);
         }
 
         /// <summary>
@@ -582,6 +601,196 @@ namespace GraphTeachingApp
                 highlightedNodes.Remove(firstNodeForEdge);
                 firstNodeForEdge = null;
                 drawingPanel.Invalidate();
+            }
+        }
+
+        /// <summary>
+        /// معالج حدث تغيير حجم النافذة للتكيف التلقائي
+        /// </summary>
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            try
+            {
+                // إعادة ترتيب العناصر عند تغيير حجم النافذة
+                ArrangeControlsForCurrentSize();
+            }
+            catch (Exception ex)
+            {
+                AppendToResults($"تحذير: خطأ في تعديل الحجم: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ترتيب العناصر حسب الحجم الحالي للنافذة
+        /// </summary>
+        private void ArrangeControlsForCurrentSize()
+        {
+            if (this.WindowState == FormWindowState.Minimized) return;
+
+            int windowWidth = this.ClientSize.Width;
+            int windowHeight = this.ClientSize.Height;
+
+            // تحديث حجم وموقع لوحة الرسم لتكون متجاوبة
+            if (drawingPanel != null)
+            {
+                // احسب المساحة المتاحة للوحة الرسم
+                int toolbarHeight = toolbarPanel?.Height ?? 80;
+                int resultsHeight = resultsTextBox?.Height ?? 100;
+                int inputControlsWidth = 240; // عرض لوحة الإدخال الجانبية
+
+                int drawingWidth = Math.Max(400, windowWidth - inputControlsWidth - 60);
+                int drawingHeight = Math.Max(300, windowHeight - toolbarHeight - resultsHeight - 80);
+
+                drawingPanel.Size = new Size(drawingWidth, drawingHeight);
+                drawingPanel.Location = new Point(20, toolbarHeight + 20);
+
+                // تحديث حجم الخط بناءً على حجم لوحة الرسم
+                UpdateFontSizes();
+            }
+
+            // تحديث حجم مربع النتائج ليكون متجاوباً
+            if (resultsTextBox != null)
+            {
+                resultsTextBox.Width = Math.Max(500, windowWidth - 40);
+                resultsTextBox.Height = Math.Max(80, (int)(windowHeight * 0.15)); // 15% من ارتفاع النافذة
+                resultsTextBox.Location = new Point(20, windowHeight - resultsTextBox.Height - 20);
+            }
+
+            // تحديث حجم شريط الأدوات
+            if (toolbarPanel != null)
+            {
+                toolbarPanel.Width = Math.Max(600, windowWidth - 40);
+                // إعادة ترتيب الأزرار في شريط الأدوات
+                ArrangeToolbarButtons();
+            }
+
+            // تحديث موقع لوحة الإدخال الجانبية
+            if (this.Controls.ContainsKey("inputPanel") && this.Controls["inputPanel"] is Panel inputPanel)
+            {
+                int inputControlsWidth = 240; // عرض لوحة الإدخال الجانبية
+                inputPanel.Location = new Point(windowWidth - inputControlsWidth - 20, toolbarPanel?.Height ?? 80);
+                inputPanel.Size = new Size(inputControlsWidth, windowHeight - (toolbarPanel?.Height ?? 80) - (resultsTextBox?.Height ?? 100) - 60);
+            }
+
+            // تحديث موقع وأبعاد مربعات الإدخال
+            ArrangeInputControls();
+
+            // إعادة رسم لوحة الرسم
+            if (drawingPanel != null)
+            {
+                drawingPanel.Invalidate();
+            }
+        }
+
+        /// <summary>
+        /// تحديث أحجام الخطوط حسب حجم النافذة
+        /// </summary>
+        private void UpdateFontSizes()
+        {
+            if (drawingPanel == null) return;
+
+            float scaleFactor = Math.Min(drawingPanel.Width / 800f, drawingPanel.Height / 600f);
+            scaleFactor = Math.Max(0.5f, Math.Min(2.0f, scaleFactor)); // تحديد بين 0.5 و 2.0
+
+            // تحديث حجم خط مربع النتائج
+            if (resultsTextBox != null)
+            {
+                resultsTextBox.Font = new Font("Consolas", (int)(10 * scaleFactor));
+            }
+
+            // تحديث حجم خط الأزرار
+            if (toolbarPanel != null)
+            {
+                foreach (Control ctrl in toolbarPanel.Controls)
+                {
+                    if (ctrl is Button btn)
+                    {
+                        btn.Font = new Font(btn.Font.FontFamily, (int)(9 * scaleFactor));
+                    }
+                }
+            }
+
+            AppendToResults($"تم تحديث أحجام العناصر للحجم الجديد (معامل القياس: {scaleFactor:F2})");
+        }
+
+        /// <summary>
+        /// ترتيب أزرار شريط الأدوات بشكل متجاوب
+        /// </summary>
+        private void ArrangeToolbarButtons()
+        {
+            if (toolbarPanel == null) return;
+
+            int buttonWidth = 105;
+            int buttonHeight = 30;
+            int spacing = 5;
+            int currentX = 10;
+            int currentY = 5;
+
+            // تعديل عرض الأزرار حسب حجم شريط الأدوات
+            int availableWidth = toolbarPanel.Width - 20;
+            int buttonsPerRow = Math.Max(1, availableWidth / (buttonWidth + spacing));
+
+            if (buttonsPerRow < 6) // إذا كان العرض ضيق، اجعل الأزرار أصغر
+            {
+                buttonWidth = (availableWidth - (buttonsPerRow + 1) * spacing) / buttonsPerRow;
+            }
+
+            int buttonsInCurrentRow = 0;
+
+            foreach (Control ctrl in toolbarPanel.Controls)
+            {
+                if (ctrl is Button btn)
+                {
+                    btn.Size = new Size(buttonWidth, buttonHeight);
+                    btn.Location = new Point(currentX, currentY);
+
+                    currentX += buttonWidth + spacing;
+                    buttonsInCurrentRow++;
+
+                    if (buttonsInCurrentRow >= buttonsPerRow && ctrl != toolbarPanel.Controls[toolbarPanel.Controls.Count - 1])
+                    {
+                        currentX = 10;
+                        currentY += buttonHeight + spacing;
+                        buttonsInCurrentRow = 0;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// ترتيب مربعات الإدخال بشكل متجاوب داخل اللوحة الجانبية
+        /// </summary>
+        private void ArrangeInputControls()
+        {
+            if (sourceNodeComboBox == null) return;
+
+            // جميع العناصر الآن داخل اللوحة الجانبية، لذا لا نحتاج لتعديل مواقعها
+            // فقط نتأكد من أنها مرئية ومحدثة
+
+            // تحديث أسماء العقد في القوائم إذا لزم الأمر
+            UpdateNodeComboBoxes();
+
+            // تحديث حجم الخط للعناصر داخل اللوحة الجانبية
+            if (this.Controls.ContainsKey("inputPanel") && this.Controls["inputPanel"] is Panel inputPanel)
+            {
+                float scaleFactor = Math.Min(inputPanel.Width / 220f, inputPanel.Height / 400f);
+                scaleFactor = Math.Max(0.8f, Math.Min(1.5f, scaleFactor));
+
+                foreach (Control ctrl in inputPanel.Controls)
+                {
+                    if (ctrl is Label lbl)
+                    {
+                        lbl.Font = new Font(lbl.Font.FontFamily, (int)(9 * scaleFactor));
+                    }
+                    else if (ctrl is ComboBox cb)
+                    {
+                        cb.Font = new Font(cb.Font.FontFamily, (int)(9 * scaleFactor));
+                    }
+                    else if (ctrl is TextBox tb)
+                    {
+                        tb.Font = new Font(tb.Font.FontFamily, (int)(9 * scaleFactor));
+                    }
+                }
             }
         }
 
