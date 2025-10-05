@@ -287,8 +287,37 @@ public class ResultsWindow : Form
 namespace GraphTeachingApp
 {
     /// <summary>
-    /// النافذة الرئيسية لتطبيق تعليم الرسوم البيانية
-    /// تحتوي على جميع عناصر الواجهة والوظائف التفاعلية
+    /// النافذة الرئيسية لتطبيق تعليم الرسوم البيانية - مركز التحكم في التطبيق
+    ///
+    /// هذه الفئة هي قلب التطبيق وتتولى جميع المهام التالية:
+    ///
+    /// إدارة الواجهة:
+    /// - إنشاء وترتيب جميع عناصر الواجهة (أزرار، مربعات نص، لوحة رسم)
+    /// - التعامل مع تغيير أحجام النافذة والتكيف التلقائي
+    /// - إدارة النافذة المنبثقة لعرض النتائج
+    ///
+    /// إدارة الرسم البياني:
+    /// - حفظ الحالة الحالية للرسم البياني وقائمة العقد والوصلات
+    /// - إدارة الرسوم المتحركة والتلوين التفاعلي للخوارزميات
+    /// - حفظ حالة التحديد والتفاعل مع المستخدم
+    ///
+    /// الخوارزميات والعمليات:
+    /// - تنفيذ خوارزميات البحث (DFS, BFS)
+    /// - إيجاد المسارات وتحليل الرسم البياني
+    /// - إنشاء الرسوم المتممة والجزئيات
+    /// - فحص أنواع الرسوم البيانية المختلفة
+    ///
+    /// التفاعل مع المستخدم:
+    /// - معالجة أحداث الماوس (إضافة عقد، رسم وصلات، سحب العقد)
+    /// - معالجة أحداث الأزرار والمدخلات
+    /// - عرض النتائج والرسائل التوضيحية
+    ///
+    /// مثال على دورة العمل النموذجية:
+    /// 1. إنشاء رسم بياني جديد أو تحميل ملف موجود
+    /// 2. إضافة عقد بالنقر المزدوج في لوحة الرسم
+    /// 3. ربط العقد ببعضها بالنقر على عقدتين متتاليتين
+    /// 4. تنفيذ خوارزمية أو عملية من الأزرار المتاحة
+    /// 5. مراقبة النتائج في النافذة المنبثقة وعلى لوحة الرسم
     /// </summary>
     public partial class MainForm : Form
     {
@@ -1713,43 +1742,83 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// فحص ما إذا كان الرسم ثنائي التجزئة باستخدام BFS
+        /// فحص ما إذا كان الرسم البياني ثنائي التجزئة (Bipartite) باستخدام خوارزمية BFS
+        ///
+        /// الرسم البياني ثنائي التجزئة هو رسم يمكن تقسيمه إلى مجموعتين منفصلتين حيث:
+        /// - لا توجد وصلات داخل نفس المجموعة
+        /// - جميع الوصلات تكون بين المجموعتين المختلفتين
+        ///
+        /// خوارزمية التلوين (Coloring Algorithm):
+        /// - نستخدم نظام تلوين بسيط: اللون 0 واللون 1
+        /// - نبدأ بتلوين عقدة باللون 0
+        /// - كل جار يجب أن يكون بلون مختلف عن العقدة الحالية
+        /// - إذا وجدنا جار بنفس اللون، فالرسم ليس ثنائي التجزئة
+        ///
+        /// خطوات الخوارزمية:
+        /// 1. إنشاء خريطة للألوان لكل عقدة
+        /// 2. إنشاء طابور لبدء BFS من العقدة الأولى
+        /// 3. تلوين العقدة الأولى باللون 0 وإضافتها للطابور
+        /// 4. لكل عقدة في الطابور:
+        ///    - فحص جميع جيرانها
+        ///    - تلوين الجيران غير الملونين باللون المعاكس
+        ///    - إذا وُجد جار بلون نفس العقدة الحالية → الرسم ليس ثنائي
+        ///
+        /// أهمية الرسوم ثنائية التجزئة:
+        /// - تستخدم في نمذجة المشاكل ذات التقسيم الثنائي
+        /// - مفيدة في حل مشاكل التخصيص والجدولة
+        /// - أساس خوارزميات المطابقة (Matching Algorithms)
+        ///
+        /// أمثلة:
+        /// - الرسم الذي يمثل مجموعتين من الأشخاص والوظائف (علاقات التوظيف)
+        /// - رسم الصداقة بين مجموعتين مختلفتين بدون صداقات داخلية
         /// </summary>
+        /// <returns>true إذا كان الرسم ثنائي التجزئة، false إذا لم يكن كذلك</returns>
         private bool IsBipartite()
         {
+            // حالة خاصة: الرسم الفارغ ثنائي التجزئة افتراضياً
             if (currentGraph.Nodes.Count == 0) return true;
 
-            var colors = new Dictionary<string, int>();
-            var queue = new Queue<string>();
+            var colors = new Dictionary<string, int>();  // خريطة الألوان للعقد
+            var queue = new Queue<string>();            // طابور لخوارزمية BFS
 
-            // تلوين العقدة الأولى باللون 0
+            // المرحلة الأولى: بدء التلوين من العقدة الأولى
             string startNode = currentGraph.Nodes[0].Name;
-            colors[startNode] = 0;
+            colors[startNode] = 0;  // تلوين باللون 0 (المجموعة الأولى)
             queue.Enqueue(startNode);
 
+            // المرحلة الثانية: معالجة جميع العقد بالترتيب
             while (queue.Count > 0)
             {
-                string current = queue.Dequeue();
+                string current = queue.Dequeue();  // اخراج العقدة الحالية
 
+                // فحص جميع جيران العقدة الحالية
                 if (currentGraph.AdjacencyList.ContainsKey(current))
                 {
                     foreach (string neighbor in currentGraph.AdjacencyList[current])
                     {
+                        // إذا لم تكن العقدة ملونة بعد
                         if (!colors.ContainsKey(neighbor))
                         {
-                            // تلوين الجار باللون المعاكس
+                            // تلوين الجار باللون المعاكس للعقدة الحالية
+                            // إذا كانت العقدة الحالية بلون 0، فالجار بلون 1 والعكس
                             colors[neighbor] = 1 - colors[current];
-                            queue.Enqueue(neighbor);
+                            queue.Enqueue(neighbor);  // إضافة الجار للطابور لمعالجته لاحقاً
                         }
+                        // إذا كانت العقدة ملونة وكان لونها نفس لون العقدة الحالية
                         else if (colors[neighbor] == colors[current])
                         {
-                            // نفس اللون - ليس ثنائي التجزئة
+                            // خطأ: نفس اللون في نفس المجموعة - ليس ثنائي التجزئة
+                            // هذا يعني وجود وصلة داخل نفس المجموعة
+                            AppendToResults($"تعارض في التلوين بين {current} و {neighbor}");
                             return false;
                         }
+                        // إذا كان اللون مختلف، فهذا متوقع وليس هناك مشكلة
                     }
                 }
             }
 
+            // إذا انتهت المعالجة بدون تعارض، فالرسم ثنائي التجزئة
+            AppendToResults($"تم تلوين الرسم بنجاح: مجموعة 0 ({colors.Count(kvp => kvp.Value == 0)} عقد)، مجموعة 1 ({colors.Count(kvp => kvp.Value == 1)} عقد)");
             return true;
         }
 
@@ -1865,18 +1934,45 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// تنفيذ خوارزمية DFS مع الرسم التدريجي
+        /// تنفيذ خوارزمية البحث في العمق (Depth-First Search - DFS) مع الرسم التدريجي
+        ///
+        /// خوارزمية DFS هي إحدى أهم خوارزميات التنقل في الرسوم البيانية:
+        ///
+        /// مبدأ عمل DFS:
+        /// - نبدأ من عقدة البداية ونكتشف أكبر عمق ممكن في اتجاه واحد
+        /// - نستكشف الفرع كاملاً قبل العودة لاستكشاف فروع أخرى
+        /// - نستخدم مبدأ الـ Stack (Last In, First Out) في التنفيذ
+        ///
+        /// خطوات الخوارزمية:
+        /// 1. ابدأ من العقدة المحددة وعلّمها كمُزارة
+        /// 2. أضف العقدة إلى ترتيب الزيارة
+        /// 3. لكل جار غير مُزار من العقدة الحالية:
+        ///    - اذهب إليه وكرر العملية نفسها
+        /// 4. عند الانتهاء من فرع، ارجع للفرع السابق
+        ///
+        /// الخصائص المهمة:
+        /// - تستخدم في اكتشاف العقد واستكشاف الفرع بالكامل
+        /// - مفيدة في حل المشاكل التي تتطلب استكشاف أعماق البيانات
+        /// - أداؤها O(V + E) حيث V عدد العقد و E عدد الوصلات
+        ///
+        /// مثال عملي:
+        /// للرسم: A-B, A-C, B-D, C-E
+        /// ترتيب DFS من A: A -> B -> D -> C -> E
         /// </summary>
+        /// <param name="startNode">العقدة التي نبدأ منها البحث</param>
         private void ExecuteDFS(string startNode)
         {
-            var visited = new HashSet<string>();
-            var dfsOrder = new List<string>();
+            var visited = new HashSet<string>(); // تتبع العقد المُزارة لتجنب التكرار
+            var dfsOrder = new List<string>();  // حفظ ترتيب زيارة العقد
 
-            AppendToResults($"بدء DFS من العقدة: {startNode}");
+            AppendToResults($"بدء خوارزمية البحث في العمق (DFS) من العقدة: {startNode}");
 
+            // بدء الخوارزمية التكرارية
             DFSRecursive(startNode, visited, dfsOrder);
 
-            AppendToResults($"ترتيب الزيارة في DFS: {string.Join(" -> ", dfsOrder)}");
+            // عرض النتيجة النهائية للمستخدم
+            AppendToResults($"ترتيب زيارة العقد في DFS: {string.Join(" -> ", dfsOrder)}");
+            AppendToResults($"إجمالي العقد المُزارة: {dfsOrder.Count}");
         }
 
         /// <summary>
@@ -1917,66 +2013,101 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// تنفيذ خوارزمية BFS مع الرسم التدريجي
+        /// تنفيذ خوارزمية البحث في العرض أولاً (Breadth-First Search - BFS) مع الرسم التدريجي
+        ///
+        /// خوارزمية BFS هي خوارزمية بحث منهجية تستكشف الرسم البياني طبقة بطبقة:
+        ///
+        /// مبدأ عمل BFS:
+        /// - نبدأ من عقدة البداية ونزور جميع جيرانها أولاً
+        /// - ثم نزور جيران الجيران، وهكذا في طبقات متتالية
+        /// - نستخدم مبدأ الـ Queue (First In, First Out) في التنفيذ
+        ///
+        /// خطوات الخوارزمية:
+        /// 1. أنشئ طابور فارغ ولديك مجموعة للعقد المُزارة
+        /// 2. أضف العقدة البداية للطابور وعلّمها كمُزارة
+        /// 3. بينما الطابور غير فارغ:
+        ///    - اخرج العقدة الأولى من الطابور
+        ///    - لكل جار غير مُزار من هذه العقدة:
+        ///      - أضفه للطابور وعلّمه كمُزار
+        ///      - سجل ترتيب الزيارة
+        ///
+        /// الخصائص المهمة:
+        /// - تزور العقد في طبقات حسب بعدها عن نقطة البداية
+        /// - مفيدة في إيجاد أقصر مسار في رسوم غير موزونة
+        /// - مضمونة للعثور على أقصر مسار في رسوم بدون أوزان
+        /// - أداؤها O(V + E) حيث V عدد العقد و E عدد الوصلات
+        ///
+        /// مثال عملي:
+        /// للرسم: A-B, A-C, B-D, C-E
+        /// ترتيب BFS من A: A -> B -> C -> D -> E
+        /// (الطبقة الأولى: B,C ثم الطبقة الثانية: D,E)
         /// </summary>
+        /// <param name="startNode">العقدة التي نبدأ منها البحث</param>
         private void ExecuteBFS(string startNode)
         {
-            var visited = new HashSet<string>();
-            var bfsOrder = new List<string>();
-            var queue = new Queue<string>();
+            var visited = new HashSet<string>();     // تتبع العقد المُزارة
+            var bfsOrder = new List<string>();      // ترتيب زيارة العقد
+            var queue = new Queue<string>();        // الطابور لتنفيذ BFS
 
-            AppendToResults($"بدء BFS من العقدة: {startNode}");
+            AppendToResults($"بدء خوارزمية البحث في العرض (BFS) من العقدة: {startNode}");
 
-            visited.Add(startNode);
-            queue.Enqueue(startNode);
-            bfsOrder.Add(startNode);
+            // المرحلة الأولى: تهيئة البداية
+            visited.Add(startNode);                 // علّم العقدة البداية كمُزارة
+            queue.Enqueue(startNode);              // أضفها للطابور
+            bfsOrder.Add(startNode);               // سجلها في ترتيب الزيارة
 
-            // تلوين العقدة الأولى
+            // تلوين العقدة الأولى باللون المميز للبداية
             var startNodeObj = currentGraph.Nodes.FirstOrDefault(n => n.Name == startNode);
             if (startNodeObj != null)
             {
-                startNodeObj.NodeColor = BFS_COLOR;
-                drawingPanel.Invalidate();
-                System.Threading.Thread.Sleep(1000);
+                startNodeObj.NodeColor = BFS_COLOR;  // لون أزرق للعقدة الحالية
+                drawingPanel.Invalidate();          // إعادة رسم لوحة الرسم
+                System.Threading.Thread.Sleep(1000); // انتظار لتوضيح العملية
             }
 
+            // المرحلة الثانية: المعالجة الرئيسية للخوارزمية
             while (queue.Count > 0)
             {
-                string current = queue.Dequeue();
+                string current = queue.Dequeue();   // اخراج العقدة الأولى من الطابور
 
+                // فحص جميع جيران العقدة الحالية
                 if (currentGraph.AdjacencyList.ContainsKey(current))
                 {
                     foreach (string neighbor in currentGraph.AdjacencyList[current])
                     {
+                        // إذا لم تكن العقدة مُزارة بعد
                         if (!visited.Contains(neighbor))
                         {
-                            visited.Add(neighbor);
-                            queue.Enqueue(neighbor);
-                            bfsOrder.Add(neighbor);
+                            visited.Add(neighbor);         // علّمها كمُزارة
+                            queue.Enqueue(neighbor);       // أضفها للطابور للمعالجة لاحقاً
+                            bfsOrder.Add(neighbor);        // سجلها في ترتيب الزيارة
 
-                            // تلوين العقدة الجديدة
+                            // تلوين العقدة الجديدة باللون المميز
                             var neighborNode = currentGraph.Nodes.FirstOrDefault(n => n.Name == neighbor);
                             if (neighborNode != null)
                             {
-                                neighborNode.NodeColor = BFS_COLOR;
-                                drawingPanel.Invalidate();
-                                System.Threading.Thread.Sleep(1000);
+                                neighborNode.NodeColor = BFS_COLOR;  // لون أزرق للعقدة الجديدة
+                                drawingPanel.Invalidate();           // إعادة رسم لوحة الرسم
+                                System.Threading.Thread.Sleep(1000); // انتظار لتوضيح العملية
                             }
                         }
                     }
                 }
 
-                // تلوين العقدة باللون الأخضر بعد الانتهاء من معالجتها
+                // تلوين العقدة الحالية باللون الأخضر بعد الانتهاء من معالجة جميع جيرانها
                 var currentNode = currentGraph.Nodes.FirstOrDefault(n => n.Name == current);
                 if (currentNode != null)
                 {
-                    currentNode.NodeColor = VISITED_COLOR;
-                    drawingPanel.Invalidate();
-                    System.Threading.Thread.Sleep(500);
+                    currentNode.NodeColor = VISITED_COLOR;  // لون أخضر للعقدة المكتملة
+                    drawingPanel.Invalidate();              // إعادة رسم لوحة الرسم
+                    System.Threading.Thread.Sleep(500);     // انتظار أقصر للانتقال السلس
                 }
             }
 
-            AppendToResults($"ترتيب الزيارة في BFS: {string.Join(" -> ", bfsOrder)}");
+            // عرض النتائج النهائية للمستخدم
+            AppendToResults($"ترتيب زيارة العقد في BFS: {string.Join(" -> ", bfsOrder)}");
+            AppendToResults($"إجمالي العقد المُزارة: {bfsOrder.Count}");
+            AppendToResults($"عدد المستويات (الطبقات): ~{Math.Ceiling(Math.Log(bfsOrder.Count, 2))}");
         }
 
         /// <summary>
