@@ -7,6 +7,283 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.Json;
 
+/// <summary>
+/// نافذة منبثقة جميلة لعرض نتائج الخوارزميات والعمليات
+/// </summary>
+public class ResultsWindow : Form
+{
+    private RichTextBox resultsTextBox;
+    private Panel titlePanel;
+    private Label titleLabel;
+    private Button btnClear, btnCopy, btnMinimize, btnClose;
+    private Timer fadeTimer;
+    private bool isMinimized = false;
+
+    public ResultsWindow()
+    {
+        InitializeResultsWindow();
+    }
+
+    private void InitializeResultsWindow()
+    {
+        // إعدادات النافذة الأساسية
+        this.Size = new Size(700, 500);
+        this.MinimumSize = new Size(500, 300);
+        this.StartPosition = FormStartPosition.CenterParent;
+        this.BackColor = Color.FromArgb(45, 45, 48);
+        this.ForeColor = Color.White;
+        this.FormBorderStyle = FormBorderStyle.Sizable;
+        this.ShowInTaskbar = false;
+        this.TopMost = true;
+
+        // إنشاء لوحة العنوان الجميلة
+        CreateTitlePanel();
+
+        // إنشاء مربع النتائج المحسن
+        CreateResultsTextBox();
+
+        // إنشاء لوحة الأزرار
+        CreateButtonPanel();
+
+        // إعدادات إضافية للنافذة
+        this.Text = "نتائج العمليات - Graphs Teaching App";
+        this.Icon = null; // يمكن إضافة أيقونة لاحقاً
+
+        // إضافة تأثير التلاشي التدريجي
+        fadeTimer = new Timer();
+        fadeTimer.Interval = 16; // ~60 FPS
+        fadeTimer.Tick += FadeTimer_Tick;
+
+        // إضافة معالج تغيير الحجم
+        this.Resize += ResultsWindow_Resize;
+    }
+
+    private void CreateTitlePanel()
+    {
+        titlePanel = new Panel();
+        titlePanel.Size = new Size(this.Width, 50);
+        titlePanel.Location = new Point(0, 0);
+        titlePanel.BackColor = Color.FromArgb(33, 150, 243);
+
+        titleLabel = new Label();
+        titleLabel.Text = "📊 نتائج العمليات والخوارزميات";
+        titleLabel.ForeColor = Color.White;
+        titleLabel.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+        titleLabel.Location = new Point(15, 12);
+        titleLabel.AutoSize = true;
+
+        titlePanel.Controls.Add(titleLabel);
+        this.Controls.Add(titlePanel);
+    }
+
+    private void CreateResultsTextBox()
+    {
+        resultsTextBox = new RichTextBox();
+        resultsTextBox.Size = new Size(this.Width - 20, this.Height - 120);
+        resultsTextBox.Location = new Point(10, 60);
+        resultsTextBox.BackColor = Color.FromArgb(30, 30, 30);
+        resultsTextBox.ForeColor = Color.FromArgb(0, 255, 0);
+        resultsTextBox.Font = new Font("Consolas", 10, FontStyle.Regular);
+        resultsTextBox.ReadOnly = true;
+        resultsTextBox.ScrollBars = RichTextBoxScrollBars.Vertical;
+        resultsTextBox.BorderStyle = BorderStyle.None;
+
+        // إضافة تأثير الحدود الداخلية
+        resultsTextBox.Padding = new Padding(10);
+
+        this.Controls.Add(resultsTextBox);
+    }
+
+    private void CreateButtonPanel()
+    {
+        Panel buttonPanel = new Panel();
+        buttonPanel.Size = new Size(this.Width, 50);
+        buttonPanel.Location = new Point(0, this.Height - 60);
+        buttonPanel.BackColor = Color.FromArgb(55, 55, 58);
+
+        // زر مسح النتائج
+        btnClear = new Button();
+        btnClear.Text = "🗑️ مسح";
+        btnClear.Size = new Size(80, 35);
+        btnClear.Location = new Point(10, 7);
+        btnClear.FlatStyle = FlatStyle.Flat;
+        btnClear.BackColor = Color.FromArgb(244, 67, 54);
+        btnClear.ForeColor = Color.White;
+        btnClear.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        btnClear.Click += BtnClear_Click;
+
+        // زر نسخ النتائج
+        btnCopy = new Button();
+        btnCopy.Text = "📋 نسخ";
+        btnCopy.Size = new Size(80, 35);
+        btnCopy.Location = new Point(100, 7);
+        btnCopy.FlatStyle = FlatStyle.Flat;
+        btnCopy.BackColor = Color.FromArgb(76, 175, 80);
+        btnCopy.ForeColor = Color.White;
+        btnCopy.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        btnCopy.Click += BtnCopy_Click;
+
+        // زر تصغير/تكبير
+        btnMinimize = new Button();
+        btnMinimize.Text = "📏 تصغير";
+        btnMinimize.Size = new Size(90, 35);
+        btnMinimize.Location = new Point(190, 7);
+        btnMinimize.FlatStyle = FlatStyle.Flat;
+        btnMinimize.BackColor = Color.FromArgb(255, 193, 7);
+        btnMinimize.ForeColor = Color.White;
+        btnMinimize.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        btnMinimize.Click += BtnMinimize_Click;
+
+        // زر إغلاق
+        btnClose = new Button();
+        btnClose.Text = "❌ إغلاق";
+        btnClose.Size = new Size(80, 35);
+        btnClose.Location = new Point(this.Width - 90, 7);
+        btnClose.FlatStyle = FlatStyle.Flat;
+        btnClose.BackColor = Color.FromArgb(158, 158, 158);
+        btnClose.ForeColor = Color.White;
+        btnClose.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        btnClose.Click += BtnClose_Click;
+
+        buttonPanel.Controls.AddRange(new Control[] { btnClear, btnCopy, btnMinimize, btnClose });
+        this.Controls.Add(buttonPanel);
+    }
+
+    private void BtnClear_Click(object sender, EventArgs e)
+    {
+        resultsTextBox.Clear();
+        AddTimestampMessage("تم مسح جميع النتائج");
+    }
+
+    private void BtnCopy_Click(object sender, EventArgs e)
+    {
+        if (!string.IsNullOrEmpty(resultsTextBox.Text))
+        {
+            Clipboard.SetText(resultsTextBox.Text);
+            ShowToastMessage("تم نسخ النتائج إلى الحافظة");
+        }
+    }
+
+    private void BtnMinimize_Click(object sender, EventArgs e)
+    {
+        if (!isMinimized)
+        {
+            this.Size = new Size(500, 200);
+            btnMinimize.Text = "📏 تكبير";
+            isMinimized = true;
+        }
+        else
+        {
+            this.Size = new Size(700, 500);
+            btnMinimize.Text = "📏 تصغير";
+            isMinimized = false;
+        }
+    }
+
+    private void BtnClose_Click(object sender, EventArgs e)
+    {
+        this.Hide();
+    }
+
+    private void ResultsWindow_Resize(object sender, EventArgs e)
+    {
+        if (titlePanel != null) titlePanel.Width = this.Width;
+        if (resultsTextBox != null)
+        {
+            resultsTextBox.Width = this.Width - 20;
+            resultsTextBox.Height = this.Height - 120;
+        }
+        if (btnClose != null) btnClose.Location = new Point(this.Width - 90, 7);
+    }
+
+    private void FadeTimer_Tick(object sender, EventArgs e)
+    {
+        // تأثير التلاشي التدريجي عند الفتح (يمكن تطويره لاحقاً)
+    }
+
+    private void ShowToastMessage(string message)
+    {
+        // رسالة منبثقة مؤقتة جميلة
+        Label toast = new Label();
+        toast.Text = message;
+        toast.BackColor = Color.FromArgb(76, 175, 80);
+        toast.ForeColor = Color.White;
+        toast.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        toast.Size = new Size(200, 40);
+        toast.Location = new Point((this.Width - 200) / 2, this.Height - 100);
+        toast.TextAlign = ContentAlignment.MiddleCenter;
+        toast.BorderStyle = BorderStyle.FixedSingle;
+
+        this.Controls.Add(toast);
+        toast.BringToFront();
+
+        Timer toastTimer = new Timer();
+        toastTimer.Interval = 2000;
+        toastTimer.Tick += (s, args) =>
+        {
+            this.Controls.Remove(toast);
+            toastTimer.Stop();
+            toastTimer.Dispose();
+        };
+        toastTimer.Start();
+    }
+
+    public void AddMessage(string message, bool isWelcomeMessage = false)
+    {
+        try
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action<string, bool>(AddMessage), message, isWelcomeMessage);
+                return;
+            }
+
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            resultsTextBox.AppendText($"[{timestamp}] {message}\n");
+
+            // التمرير التلقائي للأسفل
+            resultsTextBox.SelectionStart = resultsTextBox.Text.Length;
+            resultsTextBox.ScrollToCaret();
+
+            // إظهار النافذة إذا كانت مخفية وليست رسالة ترحيبية
+            if (!this.Visible && !isWelcomeMessage)
+            {
+                this.Show();
+                this.BringToFront();
+
+                // إضافة رسالة ترحيبية أولى للنافذة المنبثقة
+                if (resultsTextBox.Text.Length < 100) // إذا كانت هذه أول رسالة في النافذة
+                {
+                    resultsTextBox.AppendText($"[{DateTime.Now.ToString("HH:mm:ss")}] 📊 مرحباً بك في نافذة النتائج!\n");
+                    resultsTextBox.AppendText($"[{DateTime.Now.ToString("HH:mm:ss")}] يمكنك نسخ النتائج أو مسحها أو تصغير النافذة\n");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"خطأ في AddMessage: {ex.Message}");
+        }
+    }
+
+    private void AddTimestampMessage(string message)
+    {
+        string timestamp = DateTime.Now.ToString("HH:mm:ss");
+        resultsTextBox.AppendText($"[{timestamp}] {message}\n");
+        resultsTextBox.SelectionStart = resultsTextBox.Text.Length;
+        resultsTextBox.ScrollToCaret();
+    }
+
+    public void ClearResults()
+    {
+        resultsTextBox.Clear();
+    }
+
+    public string GetResults()
+    {
+        return resultsTextBox.Text;
+    }
+}
+
 namespace GraphTeachingApp
 {
     /// <summary>
@@ -26,6 +303,7 @@ namespace GraphTeachingApp
         private Point lastMousePosition; // آخر موقع للفأرة
         private float zoomFactor; // عامل التكبير/التصغير
         private Point zoomCenter; // مركز التكبير
+        private ResultsWindow resultsWindow; // النافذة المنبثقة للنتائج
 
         // ألوان مختلفة للحالات المختلفة
         private readonly Color NORMAL_COLOR = Color.Gray;
@@ -42,11 +320,12 @@ namespace GraphTeachingApp
         {
             try
             {
-                // تحديد حجم النافذة المحسن مع حد أدنى للحفاظ على الوضوح
+                // تحديد حجم النافذة المحسن مع بدء التشغيل بكامل الشاشة
                 this.Size = new Size(1200, 800);
                 this.MinimumSize = new Size(900, 600); // حد أدنى لمنع تصغير زائد
                 this.Text = "تعليم الرسوم البيانية - Graphs Teaching App";
                 this.StartPosition = FormStartPosition.CenterScreen;
+                this.WindowState = FormWindowState.Maximized; // بدء التشغيل بكامل الشاشة
                 this.Resize += MainForm_Resize; // إضافة معالج تغيير الحجم
 
                 // إنشاء العناصر المرئية أولاً
@@ -64,12 +343,16 @@ namespace GraphTeachingApp
                 isDrawing = false;
                 firstNodeForEdge = null; // تهيئة العقدة الأولى لربط الوصلات
 
-                // رسالة ترحيب في مربع النتائج
-                AppendToResults("مرحباً بك في تطبيق تعليم الرسوم البيانية!");
-                AppendToResults("يمكنك البدء بإنشاء رسم بياني جديد أو تحميل ملف موجود.");
-                AppendToResults("نصيحة: انقر نقرة مزدوجة في أي مكان لإضافة عقدة جديدة");
+                // رسالة ترحيب بسيطة في النافذة الرئيسية فقط
+                AppendToResults("مرحباً بك في تطبيق تعليم الرسوم البيانية!", true);
+                AppendToResults("يمكنك البدء بإنشاء رسم بياني جديد أو تحميل ملف موجود.", true);
+                AppendToResults("نصيحة: انقر نقرة مزدوجة في أي مكان لإضافة عقدة جديدة", true);
 
-                AppendToResults($"تم تهيئة النافذة بنجاح. عدد العناصر: {this.Controls.Count}");
+                AppendToResults($"تم تهيئة النافذة بنجاح. عدد العناصر: {this.Controls.Count}", true);
+
+                // رسالة توضيحية حول النافذة المنبثقة
+                AppendToResults("ملاحظة: ستظهر نافذة النتائج المنبثقة عند تنفيذ أي خوارزمية أو عملية", true);
+                AppendToResults("يمكنك إغلاقها وستعود للظهور عند الحاجة", true);
             }
             catch (Exception ex)
             {
@@ -106,10 +389,7 @@ namespace GraphTeachingApp
             // إنشاء شريط الأدوات العلوي مع خصائص متجاوبة
             CreateResponsiveToolbar();
 
-            // إنشاء مربع النتائج السفلي مع خصائص متجاوبة
-            CreateResponsiveResultsTextBox();
-
-            // إنشاء مربعات الإدخال للعقد والمسارات مع خصائص متجاوبة
+            // إنشاء مربعات الإدخال المتجاوبة للعقد والمسارات مع خصائص متجاوبة
             CreateResponsiveInputControls();
         }
 
@@ -129,21 +409,22 @@ namespace GraphTeachingApp
                 toolbarPanel.AutoScroll = false;
 
                 // قائمة بجميع الأزرار مع معالجاتها
-                var buttons = new (string text, EventHandler handler)[]
-                {
-                    ("تحميل ملف", BtnLoad_Click),
-                    ("حفظ ملف", BtnSave_Click),
-                    ("رسم البيان", BtnDraw_Click),
-                    ("رسم المتمم", BtnComplement_Click),
-                    ("الكود الثنائي", BtnBinary_Click),
-                    ("إيجاد مسارات", BtnFindPaths_Click),
-                    ("نوع البيان", BtnCheckType_Click),
-                    ("متتالية الدرجات", BtnDegreeSequence_Click),
-                    ("الجزئيات", BtnSubgraphs_Click),
-                    ("تنفيذ DFS", BtnDFS_Click),
-                    ("تنفيذ BFS", BtnBFS_Click),
-                    ("جميع المسارات", BtnAllPaths_Click)
-                };
+                 var buttons = new (string text, EventHandler handler)[]
+                 {
+                     ("تحميل ملف", BtnLoad_Click),
+                     ("حفظ ملف", BtnSave_Click),
+                     ("رسم البيان", BtnDraw_Click),
+                     ("رسم المتمم", BtnComplement_Click),
+                     ("الكود الثنائي", BtnBinary_Click),
+                     ("إيجاد مسارات", BtnFindPaths_Click),
+                     ("نوع البيان", BtnCheckType_Click),
+                     ("متتالية الدرجات", BtnDegreeSequence_Click),
+                     ("الجزئيات", BtnSubgraphs_Click),
+                     ("تنفيذ DFS", BtnDFS_Click),
+                     ("تنفيذ BFS", BtnBFS_Click),
+                     ("جميع المسارات", BtnAllPaths_Click),
+                     ("عرض النتائج", BtnShowResults_Click)
+                 };
 
                 // إنشاء جميع الأزرار
                 foreach (var (text, handler) in buttons)
@@ -164,11 +445,11 @@ namespace GraphTeachingApp
                 // إضافة شريط الأدوات إلى النافذة
                 this.Controls.Add(toolbarPanel);
 
-                AppendToResults($"تم إنشاء شريط الأدوات المتجاوب مع {buttons.Length} زر");
+                AppendToResults($"تم إنشاء شريط الأدوات المتجاوب مع {buttons.Length} زر", true);
             }
             catch (Exception ex)
             {
-                AppendToResults($"خطأ في إنشاء شريط الأدوات: {ex.Message}");
+                AppendToResults($"خطأ في إنشاء شريط الأدوات: {ex.Message}", true);
             }
         }
 
@@ -186,23 +467,6 @@ namespace GraphTeachingApp
             return button;
         }
 
-        /// <summary>
-        /// إنشاء مربع النتائج المتجاوب السفلي
-        /// </summary>
-        private void CreateResponsiveResultsTextBox()
-        {
-            resultsTextBox = new RichTextBox();
-            resultsTextBox.Size = new Size(1150, 100);
-            resultsTextBox.Location = new Point(10, 680);
-            resultsTextBox.BackColor = Color.Black;
-            resultsTextBox.ForeColor = Color.Green;
-            resultsTextBox.Font = new Font("Consolas", 10);
-            resultsTextBox.ReadOnly = true;
-            resultsTextBox.ScrollBars = RichTextBoxScrollBars.Vertical;
-            resultsTextBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-
-            this.Controls.Add(resultsTextBox);
-        }
 
         /// <summary>
         /// إنشاء مربعات الإدخال المتجاوبة للعقد والمسارات
@@ -285,33 +549,52 @@ namespace GraphTeachingApp
         }
 
         /// <summary>
-        /// إضافة نص إلى مربع النتائج مع الطابع الزمني
+        /// إضافة نص إلى النافذة المنبثقة للنتائج مع الطابع الزمني
         /// </summary>
-        private void AppendToResults(string message)
+        private void AppendToResults(string message, bool isWelcomeMessage = false)
         {
             try
             {
-                // التحقق من وجود مربع النتائج وتهيئته
-                if (resultsTextBox == null)
+                // إضافة الرسالة للنافذة المنبثقة (إلا إذا كانت رسالة ترحيب)
+                if (!isWelcomeMessage)
                 {
-                    return; // خروج مبكر إذا لم يكن مربع النتائج جاهزاً بعد
+                    ShowResultsWindow(message);
                 }
-
-                if (resultsTextBox.InvokeRequired)
-                {
-                    resultsTextBox.Invoke(new Action<string>(AppendToResults), message);
-                    return;
-                }
-
-                string timestamp = DateTime.Now.ToString("HH:mm:ss");
-                resultsTextBox.AppendText($"[{timestamp}] {message}\n");
-                resultsTextBox.SelectionStart = resultsTextBox.Text.Length;
-                resultsTextBox.ScrollToCaret();
             }
             catch (Exception ex)
             {
                 // في حالة حدوث خطأ، نحاول طباعته في Console للتشخيص
                 Console.WriteLine($"خطأ في AppendToResults: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// إنشاء وعرض النافذة المنبثقة للنتائج بأمان
+        /// </summary>
+        private void ShowResultsWindow(string message)
+        {
+            try
+            {
+                // إنشاء النافذة إذا لم تكن موجودة أو تم إغلاقها
+                if (resultsWindow == null || resultsWindow.IsDisposed)
+                {
+                    resultsWindow = new ResultsWindow();
+                    resultsWindow.Show();
+                }
+                else if (!resultsWindow.Visible)
+                {
+                    resultsWindow.Show();
+                }
+
+                // إضافة الرسالة للنافذة المنبثقة
+                resultsWindow.AddMessage(message, false);
+
+                // جعل النافذة في المقدمة
+                resultsWindow.BringToFront();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"خطأ في ShowResultsWindow: {ex.Message}");
             }
         }
 
@@ -344,7 +627,6 @@ namespace GraphTeachingApp
         // متغيرات العناصر المرئية (سيتم تعريفها في الطريقة الجزئية)
         private Panel drawingPanel;
         private Panel toolbarPanel;
-        private RichTextBox resultsTextBox;
         private ComboBox sourceNodeComboBox;
         private ComboBox targetNodeComboBox;
         private TextBox pathLengthTextBox;
@@ -633,27 +915,18 @@ namespace GraphTeachingApp
             // تحديث حجم وموقع لوحة الرسم لتكون متجاوبة
             if (drawingPanel != null)
             {
-                // احسب المساحة المتاحة للوحة الرسم
+                // احسب المساحة المتاحة للوحة الرسم (بدون مربع النتائج السفلي)
                 int toolbarHeight = toolbarPanel?.Height ?? 80;
-                int resultsHeight = resultsTextBox?.Height ?? 100;
                 int inputControlsWidth = 240; // عرض لوحة الإدخال الجانبية
 
                 int drawingWidth = Math.Max(400, windowWidth - inputControlsWidth - 60);
-                int drawingHeight = Math.Max(300, windowHeight - toolbarHeight - resultsHeight - 80);
+                int drawingHeight = Math.Max(300, windowHeight - toolbarHeight - 40); // مساحة أكبر بدون مربع النتائج
 
                 drawingPanel.Size = new Size(drawingWidth, drawingHeight);
                 drawingPanel.Location = new Point(20, toolbarHeight + 20);
 
                 // تحديث حجم الخط بناءً على حجم لوحة الرسم
                 UpdateFontSizes();
-            }
-
-            // تحديث حجم مربع النتائج ليكون متجاوباً
-            if (resultsTextBox != null)
-            {
-                resultsTextBox.Width = Math.Max(500, windowWidth - 40);
-                resultsTextBox.Height = Math.Max(80, (int)(windowHeight * 0.15)); // 15% من ارتفاع النافذة
-                resultsTextBox.Location = new Point(20, windowHeight - resultsTextBox.Height - 20);
             }
 
             // تحديث حجم شريط الأدوات
@@ -669,7 +942,7 @@ namespace GraphTeachingApp
             {
                 int inputControlsWidth = 240; // عرض لوحة الإدخال الجانبية
                 inputPanel.Location = new Point(windowWidth - inputControlsWidth - 20, toolbarPanel?.Height ?? 80);
-                inputPanel.Size = new Size(inputControlsWidth, windowHeight - (toolbarPanel?.Height ?? 80) - (resultsTextBox?.Height ?? 100) - 60);
+                inputPanel.Size = new Size(inputControlsWidth, windowHeight - (toolbarPanel?.Height ?? 80) - 40); // ارتفاع أكبر بدون مربع النتائج
             }
 
             // تحديث موقع وأبعاد مربعات الإدخال
@@ -692,10 +965,10 @@ namespace GraphTeachingApp
             float scaleFactor = Math.Min(drawingPanel.Width / 800f, drawingPanel.Height / 600f);
             scaleFactor = Math.Max(0.5f, Math.Min(2.0f, scaleFactor)); // تحديد بين 0.5 و 2.0
 
-            // تحديث حجم خط مربع النتائج
-            if (resultsTextBox != null)
+            // تحديث حجم خط النافذة المنبثقة للنتائج
+            if (resultsWindow != null)
             {
-                resultsTextBox.Font = new Font("Consolas", (int)(10 * scaleFactor));
+                // سيتم تحديث حجم خط النافذة المنبثقة داخل النافذة نفسها
             }
 
             // تحديث حجم خط الأزرار
@@ -710,7 +983,7 @@ namespace GraphTeachingApp
                 }
             }
 
-            AppendToResults($"تم تحديث أحجام العناصر للحجم الجديد (معامل القياس: {scaleFactor:F2})");
+            AppendToResults($"تم تحديث أحجام العناصر للحجم الجديد (معامل القياس: {scaleFactor:F2})", true);
         }
 
         /// <summary>
@@ -826,14 +1099,14 @@ namespace GraphTeachingApp
             string nodeName = newNodeTextBox.Text.Trim();
             if (string.IsNullOrEmpty(nodeName))
             {
-                AppendToResults("خطأ: يرجى إدخال اسم العقدة في مربع النص");
+                AppendToResults("خطأ: يرجى إدخال اسم العقدة في مربع النص", true);
                 return;
             }
 
             // التحقق من عدم وجود عقدة بنفس الاسم
             if (currentGraph.Nodes.Any(n => n.Name == nodeName))
             {
-                AppendToResults($"خطأ: العقدة '{nodeName}' موجودة مسبقاً");
+                AppendToResults($"خطأ: العقدة '{nodeName}' موجودة مسبقاً", true);
                 return;
             }
 
@@ -1079,6 +1352,14 @@ namespace GraphTeachingApp
             }
 
             GenerateAllPaths(startNode);
+        }
+
+        /// <summary>
+        /// معالج حدث زر عرض النتائج في النافذة المنبثقة
+        /// </summary>
+        private void BtnShowResults_Click(object sender, EventArgs e)
+        {
+            ShowResultsWindow("تم فتح نافذة النتائج يدوياً");
         }
 
         #endregion
