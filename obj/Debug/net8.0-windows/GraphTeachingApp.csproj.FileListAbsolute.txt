@@ -1,0 +1,14 @@
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.GeneratedMSBuildEditorConfig.editorconfig
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.AssemblyInfoInputs.cache
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.AssemblyInfo.cs
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.csproj.CoreCompileInputs.cache
+E:\Graphs & Maze\bin\Debug\net8.0-windows\GraphTeachingApp.exe
+E:\Graphs & Maze\bin\Debug\net8.0-windows\GraphTeachingApp.deps.json
+E:\Graphs & Maze\bin\Debug\net8.0-windows\GraphTeachingApp.runtimeconfig.json
+E:\Graphs & Maze\bin\Debug\net8.0-windows\GraphTeachingApp.dll
+E:\Graphs & Maze\bin\Debug\net8.0-windows\GraphTeachingApp.pdb
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.dll
+E:\Graphs & Maze\obj\Debug\net8.0-windows\refint\GraphTeachingApp.dll
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.pdb
+E:\Graphs & Maze\obj\Debug\net8.0-windows\GraphTeachingApp.genruntimeconfig.cache
+E:\Graphs & Maze\obj\Debug\net8.0-windows\ref\GraphTeachingApp.dll

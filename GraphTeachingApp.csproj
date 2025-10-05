@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>GraphTeachingApp</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>تطبيق تعليم الرسوم البيانية</AssemblyTitle>
+    <AssemblyDescription>تطبيق تعليمي تفاعلي لشرح مفاهيم الرسوم البيانية في C#</AssemblyDescription>
+    <AssemblyCompany>معهد التعليم</AssemblyCompany>
+    <AssemblyProduct>Graph Teaching App</AssemblyProduct>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+</Project>
