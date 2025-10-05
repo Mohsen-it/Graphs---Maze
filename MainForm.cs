@@ -65,6 +65,7 @@ namespace GraphTeachingApp
                 // رسالة ترحيب في مربع النتائج
                 AppendToResults("مرحباً بك في تطبيق تعليم الرسوم البيانية!");
                 AppendToResults("يمكنك البدء بإنشاء رسم بياني جديد أو تحميل ملف موجود.");
+                AppendToResults("نصيحة: انقر نقرة مزدوجة في أي مكان لإضافة عقدة جديدة");
 
                 AppendToResults($"تم تهيئة النافذة بنجاح. عدد العناصر: {this.Controls.Count}");
             }
@@ -500,6 +501,7 @@ namespace GraphTeachingApp
                         highlightedNodes.Add(clickedNode);
                         AppendToResults($"تم تحديد العقدة الأولى للربط: {clickedNode.Name}");
                         AppendToResults("انقر على عقدة ثانية لإنشاء وصلة، أو انقر مرة أخرى على نفس العقدة لإلغاء التحديد");
+                        AppendToResults("نصيحة: انقر نقرة مزدوجة في مكان فارغ لإضافة عقدة جديدة");
                     }
                     else
                     {
@@ -527,8 +529,8 @@ namespace GraphTeachingApp
                         AppendToResults("تم إلغاء تحديد العقدة للربط");
                     }
 
-                    // إضافة عقدة جديدة عند النقر المزدوج (Ctrl + Click)
-                    if (Control.ModifierKeys == Keys.Control)
+                    // إضافة عقدة جديدة عند النقر المزدوج
+                    if (e.Clicks >= 2)
                     {
                         AddNodeAtPosition(e.Location);
                     }

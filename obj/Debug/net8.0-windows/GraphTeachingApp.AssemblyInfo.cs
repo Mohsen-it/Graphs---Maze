@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GraphTeachingApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5898c722ed58edd8d7f331f3d823a1bdca5f931d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fb4771cc7f4716e7046683b1b3dcbe7b70f5e23")]
 [assembly: System.Reflection.AssemblyProductAttribute("GraphTeachingApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("تطبيق تعليم الرسوم البيانية")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
